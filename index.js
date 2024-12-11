@@ -29,7 +29,7 @@ const swaggerOptions = {
     },
     servers: [
       {
-        url: process.env.HOST || "http://localhost:3000",
+        url: process.env.HOST || "https://rnsid-ytneg.ondigitalocean.app",
         description: "Development server",
       },
     ],
