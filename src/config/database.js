@@ -29,7 +29,6 @@ class DatabaseConnection {
     if (!this.postgres) {
       await this.initializeConnection();
     }
-
     const result = await this.postgres.query(sqlQueries.pgSQL, params);
     return result.rows;
   }
@@ -102,6 +101,65 @@ const queries = {
         AND ($4::decimal IS NULL OR price >= $4)
         AND ($5::decimal IS NULL OR price <= $5)
         AND ($6::decimal IS NULL OR vendor_rating >= $6)
+    `,
+  },
+  // Authentication queries
+  findUserByProvider: {
+    pgSQL:
+      "SELECT * FROM users WHERE auth_provider = $1 AND auth_provider_id = $2",
+  },
+  createSocialUser: {
+    pgSQL: `
+      INSERT INTO users (
+        email, username, phone_number, user_type, referral_code,
+        auth_provider, auth_provider_id, is_verified
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+      RETURNING *
+    `,
+  },
+  findUserById: {
+    pgSQL: "SELECT * FROM users WHERE id = $1",
+  },
+  findUserByEmail: {
+    pgSQL: "SELECT * FROM users WHERE email = $1",
+  },
+  createUser: {
+    pgSQL: `
+      INSERT INTO users (
+        email, username, phone_number, password_hash, 
+        user_type, referral_code, referred_by
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7)
+      RETURNING *
+    `,
+  },
+  updateResetToken: {
+    pgSQL: `
+      UPDATE users 
+      SET reset_token = $1, reset_token_expires = $2 
+      WHERE id = $3
+      RETURNING *
+    `,
+  },
+  findUserByResetToken: {
+    pgSQL: `
+      SELECT * FROM users 
+      WHERE reset_token = $1 
+      AND reset_token_expires > $2
+    `,
+  },
+  updatePassword: {
+    pgSQL: `
+      UPDATE users 
+      SET password_hash = $1, reset_token = $2, reset_token_expires = $3 
+      WHERE id = $4
+      RETURNING *
+    `,
+  },
+  createReferral: {
+    pgSQL: `
+      INSERT INTO referrals (referrer_id, referred_id) 
+      VALUES ($1, $2)
+      RETURNING *
     `,
   },
 };

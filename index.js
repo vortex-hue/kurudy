@@ -25,7 +25,7 @@ const swaggerOptions = {
     info: {
       title: "Kurudy Serverless RESTAPI",
       version: "1.0.0",
-      description: "API for managing property listings",
+      description: "API for managing property listings and authentication",
     },
     servers: [
       {
@@ -58,8 +58,45 @@ const swaggerOptions = {
             updated_at: { type: "string" },
           },
         },
+        User: {
+          type: "object",
+          required: [
+            "email",
+            "username",
+            "phone_number",
+            "password",
+            "user_type",
+          ],
+          properties: {
+            id: { type: "integer" },
+            email: { type: "string", format: "email" },
+            username: { type: "string" },
+            phone_number: { type: "string" },
+            user_type: {
+              type: "string",
+              enum: ["vendor", "admin", "customer"],
+            },
+            referral_code: { type: "string" },
+            auth_provider: { type: "string" },
+            is_verified: { type: "boolean" },
+            created_at: { type: "string" },
+            updated_at: { type: "string" },
+          },
+        },
+      },
+      securitySchemes: {
+        bearerAuth: {
+          type: "http",
+          scheme: "bearer",
+          bearerFormat: "JWT",
+        },
       },
     },
+    security: [
+      {
+        bearerAuth: [],
+      },
+    ],
   },
   apis: ["./src/routes/*.js"], // Path to the API routes
 };
@@ -80,7 +117,18 @@ app.use("/docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
 // Routes
 const listingRoutes = require("./src/routes/listingRoutes");
+const authRoutes = require("./src/routes/authRoutes");
+const passport = require("./src/config/passport");
+const socialAuthRoutes = require("./src/routes/socialAuthRoutes");
+
+// Add passport middleware
+app.use(passport.initialize());
+
+// Add social auth routes
+app.use("/v1/auth", socialAuthRoutes);
+
 app.use("/v1/listings", upload.array("images", 10), listingRoutes);
+app.use("/v1/auth", authRoutes);
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
